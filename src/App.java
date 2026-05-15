@@ -116,36 +116,52 @@ public class App {
             exchange.close();
         });
 
-        //// LISTA
+        //// LISTA CLIENTES
+
         server.createContext("/clientes", exchange -> {
 
             StringBuilder html = new StringBuilder();
 
             html.append("""
+
                         <html>
+
                         <head>
+
                             <meta charset="UTF-8">
+
                             <style>
+
                                 table { border-collapse: collapse; width: 100%; }
                                 th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
                                 th { background-color: #f4f4f4; }
                                 a { text-decoration: none; margin-right: 10px; }
+
                             </style>
+
                         </head>
+
                         <body>
+
                         <h2>Lista de Clientes</h2>
-                        <a href='/novo'>+ Novo Cliente</a><br><br>
+
+                        <a href='/novocliente'>+ Novo Cliente</a><br><br>
+
 
                         <table>
+
                             <tr>
+
                                 <th>ID</th>
-                                <th>Pais</th>
-                                <th>Nif</th>
                                 <th>Nome</th>
                                 <th>Email</th>
                                 <th>Telefone</th>
+                                <th>Nif</th>
+                                <th>Pais</th>
                                 <th>Ações</th>
+
                             </tr>
+
                     """);
 
             Connection con = LigacaoBD.ligar();
@@ -160,28 +176,30 @@ public class App {
                 ResultSet rs = st.executeQuery("SELECT * FROM clientes");
 
                 while (rs.next()) {
+
                     int id = rs.getInt("id");
-                    String pais = rs.getString("pais");
                     String nome = rs.getString("nome");
                     String email = rs.getString("email");
                     String telefone = rs.getString("telefone");
-                    String nifx = rs.getString("nif");
+                    String nif = rs.getString("nif");
+                    String pais = rs.getString("pais");
 
                     html.append("<tr>");
                     html.append("<td>").append(id).append("</td>");
-                    html.append("<td>").append(pais).append("</td>");
-                    html.append("<td>").append(nifx).append("</td>");
                     html.append("<td>").append(nome).append("</td>");
                     html.append("<td>").append(email).append("</td>");
                     html.append("<td>").append(telefone).append("</td>");
+                    html.append("<td>").append(nif).append("</td>");
+                    html.append("<td>").append(pais).append("</td>");
 
                     html.append("<td>");
-                    html.append("<a href='/editar?id=").append(id).append("'>Editar</a>");
-                    html.append("<a href='/apagar?id=").append(id)
+                    html.append("<a href='/editarcliente?id=").append(id).append("'>Editar</a>");
+                    html.append("<a href='/apagarcliente?id=").append(id)
                             .append("' onclick=\"return confirm('Eliminar cliente?')\">Apagar</a>");
                     html.append("</td>");
 
                     html.append("</tr>");
+
                 }
 
             } catch (Exception e) {
@@ -189,9 +207,11 @@ public class App {
             }
 
             html.append("""
+
                         </table>
                         </body>
                         </html>
+
                     """);
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
@@ -202,59 +222,79 @@ public class App {
         });
 
         // FORM NOVO CLIENTE
-        server.createContext("/novo", exchange -> {
+
+        server.createContext("/novocliente", exchange -> {
 
             StringBuilder html = new StringBuilder();
 
             html.append("""
+
                         <html>
+
                         <head>
+
                             <meta charset="UTF-8">
+
                             <style>
+
                                 body { font-family: Arial; }
                                 form { width: 300px; }
                                 input { width: 100%; padding: 8px; margin-bottom: 10px; }
                                 button { padding: 8px 12px; }
                                 a { text-decoration: none; }
+
                             </style>
+
                         </head>
+
                         <body>
 
                         <h2>Novo Cliente</h2>
 
                         <a href='/clientes'>← Voltar à lista</a><br><br>
 
-                        <form method='POST' action='/guardar'>
-                            Pais:
-                            <input name='pais' required>
-
-                            NIF:
-                            <input name='nif' required>
+                        <form method='POST' action='/guardarcliente'>
 
                             Nome:
+
                             <input name='nome' required>
 
                             Email:
+
                             <input name='email' type='email' required>
 
                             Telefone:
+
                             <input name='telefone'>
 
+                            Nif:
+
+                            <input name='nif'>
+
+                            Pais:
+
+                            <input name='pais'>
+
                             <button type='submit'>Guardar</button>
+
                         </form>
 
                         </body>
+
                         </html>
+
                     """);
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, html.toString().getBytes().length);
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
+
         });
 
         // GUARDAR NOVO CLIENTE
-        server.createContext("/guardar", exchange -> {
+
+        server.createContext("/guardarcliente", exchange -> {
 
             if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 exchange.sendResponseHeaders(405, -1);
@@ -264,42 +304,59 @@ public class App {
             StringBuilder html = new StringBuilder();
 
             try {
+
                 // Ler body
+
                 String body = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
 
                 String[] params = body.split("&");
 
-                String pais = "";
-                String nif = "";
                 String nome = "";
+
                 String email = "";
+
                 String telefone = "";
 
+                String nif = "";
+
+                String pais = "";
+
                 for (String p : params) {
+
                     String[] kv = p.split("=");
 
                     if (kv.length == 2) {
+
                         String key = kv[0];
+
                         String value = java.net.URLDecoder.decode(kv[1], "UTF-8");
 
                         switch (key) {
-                            case "pais":
-                                pais = value;
-                                break;
-                            case "nif":
-                                nif = value;
-                                break;
+
                             case "nome":
                                 nome = value;
                                 break;
+
                             case "email":
                                 email = value;
                                 break;
+
                             case "telefone":
                                 telefone = value;
                                 break;
+
+                            case "nif":
+                                nif = value;
+                                break;
+
+                            case "pais":
+                                pais = value;
+                                break;
+
                         }
+
                     }
+
                 }
 
                 Connection con = LigacaoBD.ligar();
@@ -308,71 +365,103 @@ public class App {
                     throw new Exception("Ligação à BD falhou!");
                 }
 
-                String sql = "INSERT INTO clientes(nome,nif,email,telefone,pais) VALUES (?,?,?,?,?)";
+                String sql = "INSERT INTO clientes(nome,email,telefone,nif,pais) VALUES (?,?,?,?,?)";
+
                 PreparedStatement ps = con.prepareStatement(sql);
 
-                ps.setString(1, pais);
-                ps.setString(2, nome);
-                ps.setString(3, nif);
-                ps.setString(4, email);
-                ps.setString(5, telefone);
+                ps.setString(1, nome);
+
+                ps.setString(2, email);
+
+                ps.setString(3, telefone);
+
+                ps.setString(4, nif);
+
+                ps.setString(5, pais);
 
                 ps.executeUpdate();
-
                 ps.close();
                 con.close();
 
                 // HTML de sucesso
+
                 html.append("""
+
                             <html>
+
                             <head>
+
                                 <meta charset="UTF-8">
+
                                 <style>
+
                                     body { font-family: Arial; }
+
                                     a { text-decoration: none; }
+
                                 </style>
+
                             </head>
+
                             <body>
 
                             <h2>:-) Cliente guardado com sucesso!</h2>
 
                             <a href='/clientes'>Ver lista</a><br><br>
-                            <a href='/novo'>Inserir novo cliente</a>
+
+                            <a href='/novocliente'>Inserir novo cliente</a>
 
                             </body>
+
                             </html>
+
                         """);
 
             } catch (Exception e) {
+
                 e.printStackTrace();
 
                 html.append("""
+
                             <html>
+
                             <head>
+
                                 <meta charset="UTF-8">
+
                             </head>
+
                             <body>
 
+
                             <h2>!! Erro ao guardar cliente!</h2>
-                            <a href='/novo'>Voltar</a>
+
+                            <a href='/novocliente'>Voltar</a>
+
 
                             </body>
+
                             </html>
+
                         """);
+
             }
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, html.toString().getBytes().length);
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
+
         });
 
         // FORM EDITAR CLIENTE
-        server.createContext("/editar", exchange -> {
+
+        server.createContext("/editarcliente", exchange -> {
 
             StringBuilder html = new StringBuilder();
 
             try {
+
                 String query = exchange.getRequestURI().getQuery();
 
                 if (query == null || !query.contains("id=")) {
@@ -388,7 +477,9 @@ public class App {
                 }
 
                 String sql = "SELECT * FROM clientes WHERE id=?";
+
                 PreparedStatement ps = con.prepareStatement(sql);
+
                 ps.setInt(1, id);
 
                 ResultSet rs = ps.executeQuery();
@@ -397,44 +488,66 @@ public class App {
                     throw new Exception("Cliente não encontrado");
                 }
 
-                String pais = rs.getString("pais");
-
                 String nome = rs.getString("nome");
+
                 String email = rs.getString("email");
+
                 String telefone = rs.getString("telefone");
 
+                String nif = rs.getString("nif");
+
+                String pais = rs.getString("pais");
+
                 html.append("""
+
                             <html>
+
                             <head>
+
                                 <meta charset="UTF-8">
+
                                 <style>
+
                                     body { font-family: Arial; }
                                     input { width: 100%; padding: 8px; margin-bottom: 10px; }
                                     form { width: 300px; }
+
                                 </style>
+
                             </head>
+
                             <body>
 
                             <h2>Editar Cliente</h2>
 
                             <a href='/clientes'>« Voltar</a><br><br>
 
-                            <form method='POST' action='/atualizar'>
+                            <form method='POST' action='/atualizarcliente'>
+
                         """);
 
                 html.append("<input type='hidden' name='id' value='").append(id).append("'>");
 
-                html.append("Nome:<input name='pais' value='").append(pais).append("' required>");
                 html.append("Nome:<input name='nome' value='").append(nome).append("' required>");
+
                 html.append("Email:<input name='email' value='").append(email).append("' required>");
+
                 html.append("Telefone:<input name='telefone' value='").append(telefone).append("'>");
 
+                html.append("Nif:<input name='nif' value='").append(nif).append("'>");
+
+                html.append("Pais:<input name='pais' value='").append(pais).append("'>");
+
                 html.append("""
+
                             <button type='submit'>Atualizar</button>
+
                             </form>
 
                             </body>
+
                             </html>
+
                         """);
 
                 rs.close();
@@ -443,25 +556,29 @@ public class App {
 
             } catch (Exception e) {
                 e.printStackTrace();
-
                 html.append("""
+
                             <html>
                             <body>
                             <h2>!Erro ao carregar cliente</h2>
                             <a href='/clientes'>Voltar</a>
                             </body>
                             </html>
+
                         """);
+
             }
 
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, html.toString().getBytes().length);
             exchange.getResponseBody().write(html.toString().getBytes());
             exchange.close();
+
         });
 
         // ATUALIZAR CLIENTE
-        server.createContext("/atualizar", exchange -> {
+
+        server.createContext("/atualizarcliente", exchange -> {
 
             if (!exchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 exchange.sendResponseHeaders(405, -1);
@@ -474,34 +591,52 @@ public class App {
                 String[] params = body.split("&");
 
                 String idStr = "";
-                String pais = "";
+
                 String nome = "";
+
                 String email = "";
+
                 String telefone = "";
 
+                String nif = "";
+
+                String pais = "";
+
                 for (String p : params) {
+
                     String[] kv = p.split("=");
 
                     if (kv.length == 2) {
                         String key = kv[0];
+
                         String value = java.net.URLDecoder.decode(kv[1], "UTF-8");
 
                         switch (key) {
+
                             case "id":
                                 idStr = value;
                                 break;
-                            case "pais":
-                                pais = value;
-                                break;
+
                             case "nome":
                                 nome = value;
                                 break;
+
                             case "email":
                                 email = value;
                                 break;
+
                             case "telefone":
                                 telefone = value;
                                 break;
+
+                            case "nif":
+                                nif = value;
+                                break;
+
+                            case "pais":
+                                pais = value;
+                                break;
+
                         }
                     }
                 }
@@ -514,14 +649,16 @@ public class App {
                     throw new Exception("Ligação à BD falhou!");
                 }
 
-                String sql = "UPDATE clientes SET nome=?, email=?, telefone=?, pais=? WHERE id=?";
+                String sql = "UPDATE clientes SET nome=?, email=?, telefone=?, nif=?, pais=? WHERE id=?";
+
                 PreparedStatement ps = con.prepareStatement(sql);
 
-                ps.setString(1, pais);
-                ps.setString(2, nome);
-                ps.setString(3, email);
-                ps.setString(4, telefone);
-                ps.setInt(5, id);
+                ps.setString(1, nome);
+                ps.setString(2, email);
+                ps.setString(3, telefone);
+                ps.setString(4, nif);
+                ps.setString(5, pais);
+                ps.setInt(6, id);
 
                 ps.executeUpdate();
 
@@ -529,21 +666,24 @@ public class App {
                 con.close();
 
                 // Redirect (melhor UX)
+
                 exchange.getResponseHeaders().add("Location", "/clientes");
                 exchange.sendResponseHeaders(302, -1);
                 exchange.close();
+
                 return;
 
             } catch (Exception e) {
                 e.printStackTrace();
-
                 String resp = """
+
                             <html>
                             <body>
                             <h2>!Erro ao atualizar cliente</h2>
                             <a href='/clientes'>Voltar</a>
                             </body>
                             </html>
+
                         """;
 
                 exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
@@ -551,6 +691,7 @@ public class App {
                 exchange.getResponseBody().write(resp.getBytes());
                 exchange.close();
             }
+
         });
 
         // ELIMINAR CLIENTE
@@ -750,7 +891,7 @@ public class App {
                             <input name='nomeAnimal' required>
 
                             dataNascimento:
-                            <input name='dataNascimento ' required>
+                            <input name='dataNascimento' required>
 
                             <button type='submit'>Guardar</button>
                         </form>
@@ -924,9 +1065,9 @@ public class App {
                         """);
 
                 html.append("<input type='hidden' name='id' value='").append(id).append("'>");
-                html.append("Nome:<input name='numeroCA' value='").append(numeroCA).append("' required>");
-                html.append("Nome:<input name='nomeAnimal' value='").append(nomeAnimal).append("' required>");
-                html.append("Email:<input name='dataNascimento' value='").append(dataNascimento).append("' required>");
+                html.append("numeroCA:<input name='numeroCA' value='").append(numeroCA).append("' required>");
+                html.append("nomeAnimal:<input name='nomeAnimal' value='").append(nomeAnimal).append("' required>");
+                html.append("dataNascimento:<input name='dataNascimento' value='").append(dataNascimento).append("' required>");
 
                 html.append("""
                             <button type='submit'>Atualizar</button>
