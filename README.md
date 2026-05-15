@@ -15,3 +15,4 @@ base de dados: appdb
 ## instalar as imagens do docker
 docker-compose up -d 
 
+//animalnovo              guardaranimal                 editaranimal                apagaranimal                atualizaranimal
